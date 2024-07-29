@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>네컷 스튜디오 찾기</title>
+<style>
+    body {
+            background-image: url('/backgroundPic.png');
+            background-size: cover; /* 이미지가 화면을 덮도록 설정 */
+            background-repeat: no-repeat; /* 이미지 반복 방지 */
+            background-attachment: fixed; /* 스크롤해도 배경 이미지 고정 */
+            background-position: center; /* 이미지를 중앙에 위치시킴 */
+            margin: 0; /* 기본 margin 제거 */
+            height: 100vh; /* 화면 전체 높이 */
+            display: flex; /* 중앙 정렬을 위해 flexbox 사용 */
+            flex-direction: column; /* 세로 방향으로 정렬 */
+            }
+
+	.navbar {
+            display: flex;
+            justify-content: space-around;
+            background-color: #cce7ff;
+            padding: 10px;
+            font-weight: 900;
+            width: 100%; /* 너비를 화면 전체로 설정 */
+            position: fixed; /* 화면 상단에 고정 */
+            top: 0; /* 상단에 위치 */
+        }
+   .navbar a {
+            text-decoration: none;
+            color: #000;
+            padding: 10px;
+            font-size: x-large;
+	        }
+    .content {
+        display: flex; /* 중앙 정렬을 위해 flexbox 사용 */
+        flex-direction: column; /* 세로 방향으로 정렬 */
+        align-items: center; /* 수평 중앙 정렬 */
+        justify-content: center; /* 수직 중앙 정렬 */
+        height: 100vh; /* 부모 요소의 전체 높이 사용 */
+        text-align: center; /* 텍스트 중앙 정렬 */
+        margin-top: 80px; /* 네비게이션 바 높이만큼 마진 추가 */
+    }
+    .center-text {
+        font-size: 5rem; /* 텍스트 크기 */
+        font-weight: 900; /* 텍스트 굵게 */
+        color: #2c2f83; /* 텍스트 색상 */
+    }
+    .subtitle-text {
+        font-size: 1.5rem; /* 텍스트 크기 */
+        font-weight: bold; /* 텍스트 굵게 */
+        color: #000; /* 텍스트 색상 */
+        margin-bottom: 40px; /* 아래쪽 여백 */
+    }
+    .studio-list {
+        display: flex;
+        justify-content: center;
+        gap: 50px; /* 열 사이의 간격 */
+    }
+    .studio-list ul {
+        list-style: none; /* 기본 목록 스타일 제거 */
+        padding: 0; /* 기본 패딩 제거 */
+    }
+    .studio-list li {
+        font-size: 1.2rem; /* 텍스트 크기 */
+        font-weight: bold; /* 텍스트 굵게 */
+        color: #2c2f83; /* 텍스트 색상 */
+        margin-bottom: 10px; /* 아래쪽 여백 */
+    }
+    .studio-list a {
+        text-decoration: none;
+        color: #2c2f83;
+        font-size: x-large;
+    }
+</style>
+</head>
+<body>
+    <!-- navigation bar -->
+	<div class="navbar">
+		<a href="login_form.html" id="loginLink">LOGIN</a>
+		<a href="#" id="logoutLink" style="display:none;">LOGOUT</a>
+		<a href="find.html" id="findLink">FIND</a>
+		<a href="about.html">ABOUT</a>
+	</div>
+    <div class="content">
+        <div class="center-text">FIND 4CUT STUDIOS</div>
+        <div class="subtitle-text">주변의 모든 네컷 사진 스튜디오들을 찾아드립니다!</div>
+        <div class="studio-list">
+            <ul>
+                <li><a href="https://lifefourcuts.com/">인생네컷</a></li>
+                <li><a href="https://photoism.co.kr/">photoism</a></li>
+                <li><a href="http://www.selpix.co.kr/">SELPIX</a></li>
+                <li><a href="http://www.photosignature.co.kr/">PHOTO SIGNATURE</a></li>
+                <li><a href=https://harufilm.com">Haru Film</a></li>
+            </ul>
+            <ul>
+                <li><a href="http://photogray.com">PHOTOGRAY</a></li>
+                <li><a href="https://www.broomstudio.co.kr">B.ROOM STUDIO</a></li>
+                <li><a href="http://planbstudio.co.kr/">PLAN.B STUDIO</a></li>
+                <li><a href="https://oldmoonself.co.kr/">oldmoon studio</a></li>
+                <li><a href="https://odtmode.com">odt.mode</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            // 로그인 여부 확인
+            $.ajax({
+                url: "/member/check_login",
+                method: "GET",
+                success: function(data) {
+                    if (data.code === "ok") {
+                        // 로그인 상태라면 LOGOUT 링크를 표시
+                        $("#loginLink").hide();
+                        $("#logoutLink").show();
+                    }
+                }
+            });
+
+            // 로그아웃
+            $("#logoutLink").click(function() {
+                if (confirm("로그아웃하시겠습니까?")) {
+                    $.ajax({
+                        url: "/member/logout",
+                        success: function(data) {
+                            if (data.code === "ok") {
+                                $("#loginLink").show();
+                                $("#logoutLink").hide();
+                            }
+                        }
+                    });
+                }
+                return false;
+
+            })
+
+        })
+    </script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>LOGIN</title>
+<style>
+	body {
+            background-image: url('/backgroundPic.png');
+            background-size: cover; /* 이미지가 화면을 덮도록 설정 */
+            background-repeat: no-repeat; /* 이미지 반복 방지 */
+            background-attachment: fixed; /* 스크롤해도 배경 이미지 고정 */
+            background-position: center; /* 이미지를 중앙에 위치시킴 */
+            margin: 0; /* 기본 margin 제거 */
+            height: 100vh; /* 화면 전체 높이 */
+            display: flex; /* 중앙 정렬을 위해 flexbox 사용 */
+            flex-direction: column; /* 세로 방향으로 정렬 */
+            }
+
+	.navbar {
+            display: flex;
+            justify-content: space-around;
+            background-color: #cce7ff;
+            padding: 10px;
+            font-weight: 900;
+            width: 100%; /* 너비를 화면 전체로 설정 */
+            position: fixed; /* 화면 상단에 고정 */
+            top: 0; /* 상단에 위치 */
+        }
+   .navbar a {
+            text-decoration: none;
+            color: #000;
+            padding: 10px;
+            font-size: x-large;
+	        }
+	.content {
+        display: flex; /* 중앙 정렬을 위해 flexbox 사용 */
+        flex-direction: column; /* 세로 방향으로 정렬 */
+        justify-content: center; /* 수직 중앙 정렬 */
+        align-items: center; /* 수평 중앙 정렬 */
+        height: 100%; /* 부모 요소의 전체 높이 사용 */
+        text-align: center; /* 텍스트 중앙 정렬 */
+        margin-top: 60px; /* 네비게이션 바 높이만큼 마진 추가 */
+    }
+	        
+	.center-text {
+        font-size: 5rem; /* 텍스트 크기 */
+        font-weight: 900; /* 텍스트 굵게 */
+        color: #2c2f83; /* 텍스트 색상 */
+        margin-bottom: 20px; /* 아래쪽 여백 */
+    }
+
+    .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px; /* 입력 필드 사이의 간격 */
+    }
+
+    .login-form input[type="text"], .login-form input[type="password"] {
+        padding: 10px;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        width: 300px;
+    }
+
+    .login-form input[type="submit"] {
+        padding: 10px;
+        font-size: 1rem;
+        background-color: #cce7ff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .login-form input[type="submit"]:hover {
+        background-color: #b3d1ff;
+    }
+    
+    .sign-up {
+    	margin-top: 3px;
+    }
+    
+    #signupBtn {
+    	font-size: small;
+    	color: black;
+    }
+
+    
+</style>
+</head>
+<body>
+	<!-- navigation bar -->
+	<div class="navbar">
+		<a href="/login_form.html" id="loginLink">LOGIN</a>
+		<a href="#" id="logoutLink" style="display:none;">LOGOUT</a>
+		<a href="/find.html" id="findLink">FIND</a>
+		<a href="about.html">ABOUT</a>
+	</div>
+	<div class="content">
+        <div class="center-text">FIND 4CUT STUDIOS</div>
+        <div class="login-form-container">
+            <form id="login_form" action="/member/login" method="post" class="login-form">
+                <input type="text" id="mid" name="mid" placeholder="ID" required>
+                <input type="password" id="mpwd" name="mpwd" placeholder="Password" required>
+                <input type="submit" value="LOGIN">
+            </form>
+        </div>
+        <div class="sign-up">
+        	<a href="/member_reg.html" id="signupBtn">계정이 없다면?</a>
+        </div>
+    </div>
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+	<script type="text/javascript">
+		$("#login_form").submit(function(event) {
+			event.preventDefault();
+			$.ajax({
+				url:"/member/login",
+				method: "POST",
+				data: $("#login_form").serialize(),
+				success: function(data) {
+					if (data.code==="ok") {
+						window.location.href = "findselfie.html";
+					} else {
+						alert(data.message);
+					}
+				}
+			});
+			return false;
+		})
+	
+	</script>
+</body>
+</html>

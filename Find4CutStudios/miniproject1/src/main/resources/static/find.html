@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>네컷 스튜디오 찾기</title>
+    <style>
+    	body {
+            background-image: url('/backgroundPic.png');
+            background-size: cover; /* 이미지가 화면을 덮도록 설정 */
+            background-repeat: no-repeat; /* 이미지 반복 방지 */
+            background-attachment: fixed; /* 스크롤해도 배경 이미지 고정 */
+            background-position: center; /* 이미지를 중앙에 위치시킴 */
+            margin: 0; /* 기본 margin 제거 */
+            height: 100vh; /* 화면 전체 높이 */
+            display: flex; /* 중앙 정렬을 위해 flexbox 사용 */
+            flex-direction: column; /* 세로 방향으로 정렬 */
+        }
+    	.navbar {
+            display: flex;
+            justify-content: space-around;
+            background-color: #cce7ff;
+            padding: 10px;
+            font-weight: 900;
+            width: 100%; /* 너비를 화면 전체로 설정 */
+            position: fixed; /* 화면 상단에 고정 */
+            top: 0; /* 상단에 위치 */
+        }
+        .navbar a {
+            text-decoration: none;
+            color: #000;
+            padding: 10px;
+            font-size: x-large;
+        }
+        .tabs {
+            display: flex;
+            padding: 10px;
+            border-bottom: 2px solid #000;
+            margin-top: 70px;
+        }
+        .tabs a {
+            margin-right: 20px;
+            text-decoration: none;
+            color: #000;
+            font-weight: bold;
+            padding-bottom: 5px;
+        }
+        .tabs a.active {
+            border-bottom: 2px solid #000;
+        }
+        .content {
+            display: none;
+        }
+        .content.active {
+            display: block;
+        }
+        .map {
+            width: 100%;
+            height: 400px;
+            background-color: #f0f0f0;
+            margin-top: 10px;
+        }
+        #contentsUpper {
+        	margin-left: 10px;
+        	font-size: large;
+        }
+        
+        #addressInput {
+            margin-bottom: 10px;
+            padding: 5px;
+            width: 300px;
+        }
+        #radiusInput {
+        	margin-bottom: 10px;
+        	padding: 5px;
+        	width: 30px;
+        }
+        
+        #showAllBtn, #showAllBtnSearch {
+        	text-decoration: none;
+            color: #000;
+            padding: 10px;
+        }
+        
+        #hereBtn {
+        	text-decoration: none;
+        	font-weight: bold;
+        }
+        
+    </style>
+</head>
+<body>
+    <!-- 로그아웃 상태에서의 navigation Bar -->
+    <div class="navbar">
+   		<a href="login_form.html" id="loginLink">LOGIN</a>
+   		<a href="#" id="logoutLink" style="display:none;">LOGOUT</a>
+        <a href="find.html" id="findLink">FIND</a>
+        <a href="about.html">ABOUT</a>
+    </div>
+    <!-- 내 주변 / 위치 검색 둘 중 하나 선택 -->
+    <div class="tabs">
+        <a href="#" id="nearbyBtn" class="active">내 주변</a>
+        <a href="#" id="searchBtn">위치 검색</a>
+    </div>
+    <div id="nearbyContent" class="content active">
+    	<div id="contentsUpper">
+	    	<h2>내 주변</h2>
+		    <p><strong>Location:</strong> <span id="nearbyLocation">위치 불러오는 중..</span></p>
+		    <span><strong>반경 </strong></span> <input type="number" id="radiusInputNear" min="1"> <span><strong>m 이내 </strong></span>
+		    <button id="radiusBtnNear">검색</button>
+    	</div>
+	    <div class="map" id="nearbyMap"></div>
+	    <p id="contentsUpper"><strong>Found!</strong></p>
+	    
+        <!-- 지도가 표시됨과 동시에 Found! 아래에 '모든 지점 표시'라는 버튼이 생성됨 -->
+        <div id="showAllBtn" style="display: none;">
+        	상호명을 클릭하면 해당 지점의 위치를 지도에서 확인할 수 있습니다. 다시 모든 지점을 지도에 표시하려면
+		    <a href="#" id="hereBtn">여기</a>를 클릭하세요.
+        </div>
+	    
+	    <ul id="nearbyFoundList"></ul>
+    </div>
+    <div id="searchContent" class="content">
+    	<div id="contentsUpper">
+	        <h2>위치 검색</h2>
+	        <p><strong>Location:</strong> <input type="text" id="addressInput" placeholder="Enter address">
+	        <span><strong>반경 </strong></span> <input type="number" id="radiusInputSearch" min="1"> <span><strong>m 이내 </strong></span>
+		    <button id="radiusBtnSearch">검색</button>
+    	</div>
+        <div class="map" id="searchMap"></div>
+        <p id="contentsUpper"><strong>Found!</strong></p>
+        <div id="showAllBtnSearch" style="display: none;">
+        	상호명을 클릭하면 해당 지점의 위치를 지도에서 확인할 수 있습니다. 다시 모든 지점을 지도에 표시하려면
+		    <a href="#" id="hereBtn">여기</a>를 클릭하세요.
+        </div>
+        <ul id="searchFoundList"></ul>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" ></script>
+	<script type="text/javascript">
+	$(document).ready(function() {
+		// 로그인 여부 확인
+		$.ajax({
+			url: "/member/check_login",
+			method: "GET",
+			success: function(data) {
+				if (data.code === "ok") {
+					// 로그인 상태라면 LOGOUT 링크를 표시
+					$("#loginLink").hide();
+					$("#logoutLink").show();
+				}
+			}
+		});
+		
+		// 로그아웃
+		$("#logoutLink").click(function() {
+			if (confirm("로그아웃하시겠습니까?")) {
+				$.ajax({
+					url: "/member/logout",
+					success: function(data) {
+						if (data.code === "ok") {
+							$("#loginLink").show();
+							$("#logoutLink").hide();
+						}
+					}
+				});
+			}
+			return false;
+		})
+	})
+	</script>
+    <script>
+        let map, infowindow, service;
+        const markers = [];
+        const infoWindows = [];
+
+        document.addEventListener("DOMContentLoaded", function() {
+        	const nearbyBtn = document.getElementById("nearbyBtn");
+            const searchBtn = document.getElementById("searchBtn");
+            const nearbyContent = document.getElementById("nearbyContent");
+            const searchContent = document.getElementById("searchContent");
+            const radiusBtnNear = document.getElementById("radiusBtnNear");
+            const radiusInputNear = document.getElementById("radiusInputNear");
+            const radiusBtnSearch = document.getElementById("radiusBtnSearch");
+            const radiusInputSearch = document.getElementById("radiusInputSearch");
+            const addressInput = document.getElementById("addressInput");
+            const showAllBtn = document.getElementById("showAllBtn");
+            const showAllBtnSearch = document.getElementById("showAllBtnSearch");
+            
+            nearbyBtn.addEventListener("click", function() {
+                nearbyBtn.classList.add("active");
+                searchBtn.classList.remove("active");
+                nearbyContent.classList.add("active");
+                searchContent.classList.remove("active");
+            });
+            
+            nearbyBtn.addEventListener("click", function() {
+                nearbyBtn.classList.add("active");
+                searchBtn.classList.remove("active");
+                nearbyContent.classList.add("active");
+                searchContent.classList.remove("active");
+            });
+            
+            radiusBtnNear.addEventListener("click", function() {
+                const r = radiusInputNear.value.trim();
+                if (!r) {
+                    alert('탐색 거리(m)를 입력하세요.');
+                } else if (r<=0) {
+                	alert('올바른 탐색 거리(m)를 입력하세요. (1 이상)')
+                } else {
+                    initNearbyMap(r);
+                }
+            });
+
+            searchBtn.addEventListener("click", function() {
+                searchBtn.classList.add("active");
+                nearbyBtn.classList.remove("active");
+                searchContent.classList.add("active");
+                nearbyContent.classList.remove("active");
+            });
+
+            radiusBtnSearch.addEventListener("click", function() {
+                const address = addressInput.value.trim();
+                const r = radiusInputSearch.value.trim();
+                if (!r) {
+                    alert('탐색 거리(m)를 입력하세요.');
+                } else if (r<=0) {
+                	alert('올바른 탐색 거리(m)를 입력하세요. (1 이상)')
+                } else {
+                    initSearchMap(address,r);
+                }
+            });
+            
+            showAllBtn.addEventListener("click", function() {
+            	showAllMarkers();
+            });
+            
+            showAllBtnSearch.addEventListener("click",function() {
+            	showAllMarkers();
+            });
+
+            // 페이지 로드 시 '내 주변' 탭 자동 클릭
+            nearbyBtn.click();
+        });
+
+        function initNearbyMap(r) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const userLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+
+                    const mapStyles = [
+                        {
+                            featureType: 'poi',
+                            elementType: 'labels',
+                            stylers: [{ visibility: 'off' }]
+                        },
+                        {
+                            featureType: 'transit',
+                            elementType: 'labels',
+                            stylers: [{ visibility: 'off' }]
+                        }
+                    ];
+
+                    map = new google.maps.Map(document.getElementById("nearbyMap"), {
+                        center: userLocation,
+                        zoom: 15,
+                        styles: mapStyles
+                    });
+                    infowindow = new google.maps.InfoWindow();
+
+                    new google.maps.Marker({
+                        position: userLocation,
+                        map: map,
+                        title: "You are here",
+                        icon: {
+                            url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                        },
+                    });
+
+                    const geocoder = new google.maps.Geocoder();
+                    geocoder.geocode({ location: userLocation }, (results, status) => {
+                        if (status === 'OK' && results[0]) {
+                            document.getElementById('nearbyLocation').textContent = results[0].formatted_address;
+                        } else {
+                            document.getElementById('nearbyLocation').textContent = 'Location not found';
+                        }
+                    });
+
+                    findStudios(userLocation, 'nearbyFoundList', r);
+
+                }, () => {
+                    handleLocationError(true, infowindow, map.getCenter());
+                });
+            } else {
+                handleLocationError(false, infowindow, map.getCenter());
+            }
+        }
+
+        function initSearchMap(address, r) {
+            const geocoder = new google.maps.Geocoder();
+
+            geocoder.geocode({ address: address }, (results, status) => {
+                if (status === 'OK') {
+                    const location = results[0].geometry.location;
+                    map = new google.maps.Map(document.getElementById('searchMap'), {
+                        center: location,
+                        zoom: 15,
+                        styles: [
+                            {
+                                featureType: 'poi',
+                                elementType: 'labels',
+                                stylers: [{ visibility: 'off' }]
+                            },
+                            {
+                                featureType: 'transit',
+                                elementType: 'labels',
+                                stylers: [{ visibility: 'off' }]
+                            }
+                        ]
+                    });
+
+                    infowindow = new google.maps.InfoWindow();
+
+                    new google.maps.Marker({
+                        position: location,
+                        map: map,
+                        title: address,
+                        icon: {
+                            url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                        }
+                    });
+
+                    findStudios(location, 'searchFoundList',r);
+
+                } else {
+                    console.error('Geocode was not successful for the following reason: ' + status);
+                }
+            });
+        }
+
+        function findStudios(location, listId, r) {
+            const keywords = ['포토이즘', '인생네컷', '하루필름', '셀픽스', '그믐달셀프스튜디오', '오디티모드', '포토그레이', '비룸스튜디오', '플랜비스튜디오', '포토시그니처'];
+
+            const listElement = document.getElementById(listId);
+            listElement.innerHTML = "";  // Clear previous results
+            
+        	 // 모든 마커와 정보창 초기화
+            markers.forEach(marker => marker.setMap(null));
+            markers.length = 0;
+            infoWindows.length = 0;
+
+            let foundAny = false; // 셀프 스튜디오를 찾았는지 여부를 추적
+            let totalResults = 0; // 지도에 표시될 스튜디오 개수를 합산
+            
+            const uniquePlaces = new Set(); // 고유한 지점을 추적
+            
+            const searchPromises = keywords.map(keyword => {
+            	return new Promise((resolve,reject) => {
+	                const request = {
+	                    location: location,
+	                    radius: r,
+	                    keyword: keyword,
+	                };
+	                service = new google.maps.places.PlacesService(map);
+	                service.nearbySearch(request, (results, status) => {
+	                    if (status === google.maps.places.PlacesServiceStatus.OK) {
+	                        const filteredResults = results.filter(place => {
+	                            return keywords.some(kw => place.name.includes(kw)) && !uniquePlaces.has(place.place_id);
+	                        });
+	                        
+	                        filteredResults.forEach(place => uniquePlaces.add(place.place_id)); // 고유한 지점 추가
+	                        
+	                        // Found! 리스트 출력
+	                        if (filteredResults.length > 0) {
+	                        	foundAny = true; // 결과가 있으면 foundAny를 true로 설정
+	                        	totalResults += filteredResults.length; // 지점 개수 누적
+	                        }
+	                        
+	                        for (let i = 0; i < filteredResults.length; i++) {
+	                            createMarker(filteredResults[i]);
+	                            const li = document.createElement("li");
+	                            li.textContent = filteredResults[i].name; 
+	                           	li.addEventListener("click", () => {
+	                           		showOnlySelectedMarker(filteredResults[i]);
+	                           	});
+	                            listElement.appendChild(li);
+	                        }
+	                        
+	                    } else {
+	                    	console.log()
+	                        // console.warn('No results were found');
+	                    }
+	                    resolve(); // 검색이 완료되면 Promise를 해결
+	                });
+                });
+            });
+            
+            // 모든 검색이 완료된 후에 실행되는 로직
+            Promise.all(searchPromises).then(() => {
+                if (!foundAny || totalResults === 0) {
+                    const li = document.createElement("li");
+                    li.textContent = "주변에 셀프 스튜디오가 없습니다";
+                    listElement.appendChild(li);
+                } else {
+                    // "모든 지점 표시" 버튼을 표시
+                    if (listId === 'nearbyFoundList') {
+                        document.getElementById('showAllBtn').style.display = 'inline';
+                    } else {
+                        document.getElementById('showAllBtnSearch').style.display = 'inline';
+                    }
+                }
+            });
+        }
+
+        function createMarker(place) {
+            const placeLoc = place.geometry.location;
+            const marker = new google.maps.Marker({
+                map: map,
+                position: placeLoc,
+                title: place.name,
+                icon: {
+                    url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"  // 빨간색 마커 이미지 URL
+                }
+            });
+            markers.push(marker); // 마커를 배열에 저장
+
+            const label = new google.maps.InfoWindow({
+                content: `<div style="font-size: 12px; font-weight: bold; color: #000;">${place.name}</div>`
+            });
+            
+            // 정보창을 배열에 저장
+            infoWindows.push(label);
+            
+            // 라벨 위에 상호명 표시하는 코드. 검색 직후에는 정보창을 열지 않음
+            /* label.open({
+                anchor: marker,
+                map,
+                shouldFocus: false
+            }); */
+            
+            google.maps.event.addListener(marker, 'click', function () {
+            	infowindow.setContent(place.name);
+				infowindow.open(map, this);
+				});
+			}     
+        
+        // Found! 아래 지점 하나를 선택했을 때 그 지점만 지도에 표시되게끔 설정하는 함수
+        function showOnlySelectedMarker(selectedPlace) {
+        	// 모든 마커를 숨김
+        	markers.forEach(marker => {
+        		marker.setVisible(false);
+        	});
+        	
+        	// 선택된 마커만 표시
+        	const selectedMarker = markers.find(marker => marker.getTitle() === selectedPlace.name);
+        	if (selectedMarker) {
+        		selectedMarker.setVisible(true);
+        		map.setCenter(selectedMarker.getPosition());
+        		map.setZoom(15);
+        	}
+        	
+        	// 모든 정보창을 닫음
+        	infoWindows.forEach(infoWindow => {
+        		infoWindow.close();
+        	})
+        	
+        	const selectedInfoWindow = infoWindows.find(infoWindow => infoWindow.getContent().includes(selectedPlace.name));
+        	if (selectedInfoWindow) {
+        		selectedInfoWindow.open(map,selectedMarker);
+        	}
+        	
+        }
+        function showAllMarkers() {
+       		// 모든 마커를 표시
+       		markers.forEach(marker => {
+       			marker.setVisible(true);
+       		});
+       		
+       		// 모든 정보창을 닫음
+        	infoWindows.forEach(infoWindow => {
+        		infoWindow.close();
+        	})
+        }
+        
+        function handleLocationError(browserHasGeolocation, infowindow, pos) {
+	        infowindow.setPosition(pos);
+	        infowindow.setContent(browserHasGeolocation ?
+	            'Error: The Geolocation service failed.' :
+	            'Error: Your browser doesn\'t support geolocation.');
+	        infowindow.open(map);
+    	}
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCmjH0x546zKfQ9rHCQ4tXOCNYiOPtUiIs&libraries=places"></script>

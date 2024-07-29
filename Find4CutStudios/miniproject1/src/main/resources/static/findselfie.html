@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>네컷 스튜디오 찾기</title>
+<style>
+	body {
+            background-image: url('/backgroundPic.png');
+            background-size: cover; /* 이미지가 화면을 덮도록 설정 */
+            background-repeat: no-repeat; /* 이미지 반복 방지 */
+            background-attachment: fixed; /* 스크롤해도 배경 이미지 고정 */
+            background-position: center; /* 이미지를 중앙에 위치시킴 */
+            margin: 0; /* 기본 margin 제거 */
+            height: 100vh; /* 화면 전체 높이 */
+            display: flex; /* 중앙 정렬을 위해 flexbox 사용 */
+            flex-direction: column; /* 세로 방향으로 정렬 */
+            }
+
+	.navbar {
+            display: flex;
+            justify-content: space-around;
+            background-color: #cce7ff;
+            padding: 10px;
+            font-weight: 900;
+            width: 100%; /* 너비를 화면 전체로 설정 */
+            position: fixed; /* 화면 상단에 고정 */
+            top: 0; /* 상단에 위치 */
+        }
+   .navbar a {
+            text-decoration: none;
+            color: #000;
+            padding: 10px;
+            font-size: x-large;
+	        }
+	        
+	.center-text {
+            font-size: 5rem; /* 텍스트 크기 */
+            font-weight: 900; /* 텍스트 굵게 */
+            color: #2c2f83; /* 텍스트 색상 */
+            text-align: center; /* 텍스트 중앙 정렬 */
+            margin: auto; /* 상하 좌우 중앙 정렬 */
+            display: flex; /* 중앙 정렬을 위해 flexbox 사용 */
+            justify-content: center; /* 가로 방향 중앙 정렬 */
+            align-items: center; /* 세로 방향 중앙 정렬 */
+            height: 100%; /* 부모 요소의 전체 높이 사용 */
+        }
+	        
+</style>
+</head>
+<body>
+	<!-- navigation bar -->
+	<div class="navbar">
+		<a href="login_form.html" id="loginLink">LOGIN</a>
+		<a href="#" id="logoutLink" style="display:none;">LOGOUT</a>
+		<a href="find.html" id="findLink">FIND</a>
+		<a href="about.html">ABOUT</a>
+	</div>
+	<div class="center-text">FIND 4CUT STUDIOS</div>
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js" ></script>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			// 로그인 여부 확인
+			$.ajax({
+				url: "/member/check_login",
+				method: "GET",
+				success: function(data) {
+					if (data.code === "ok") {
+						// 로그인 상태라면 LOGOUT 링크를 표시
+						$("#loginLink").hide();
+						$("#logoutLink").show();
+					}
+				}
+			});
+			
+			// 로그아웃
+			$("#logoutLink").click(function() {
+				if (confirm("로그아웃하시겠습니까?")) {
+					$.ajax({
+						url: "/member/logout",
+						success: function(data) {
+							if (data.code === "ok") {
+								$("#loginLink").show();
+								$("#logoutLink").hide();
+							}
+						}
+					});
+				}
+				return false;
+				
+			})
+			
+		})
+	</script>
+</body>
+</html>
